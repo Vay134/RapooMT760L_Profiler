@@ -8,7 +8,9 @@ A static Chrome/Edge WebHID settings editor for the Rapoo MT760L over its 2.4 GH
 
 Quit A HUB, connect the receiver, and select a profile or edit settings. **Apply to mouse** sends the displayed profile once. **Export profile** saves a JSON file; **Import profile** loads an exported JSON file into the editor without writing to the mouse. The built-in **Load default profile** preset is always available and cannot be overwritten.
 
-Supported controls: one DPI level (50–4000 in steps of 50), polling rate (125/250/500/1000 Hz), seven button assignments using the listed mouse/media/shortcut actions, and reversed wheel directions. Macros, arbitrary keyboard shortcuts, multiple DPI levels and A HUB JSON imports are not implemented.
+Supported controls: up to seven DPI levels (50–4000 in steps of 50), active DPI level, polling rate (125/250/500/1000 Hz), all eleven button/wheel assignments, mouse actions, keyboard keys, media/system actions and custom modifier + key shortcuts. Version 1 exports are migrated while preserving their original wire mappings. Macros and A HUB JSON imports are not yet implemented.
+
+Windows pointer speed, Windows scroll speed and M+ cross-device features depend on Windows software; a static WebHID page cannot configure them.
 
 ## Device reads and persistence
 
@@ -20,7 +22,7 @@ The preset replays the original 13 captured A HUB writes. Its DPI block at 0x638
 
 Polling interval is encoded at 0x630: 1 = 1000 Hz, 2 = 500 Hz, 4 = 250 Hz, 8 = 125 Hz. All four were captured while changing A HUB settings. Profile-download writes preserve trailing bytes FF FF; direct polling changes used 01 00. A HUB's JSON returnRate enum uses a different numbering scheme.
 
-Button encodings and wheel directions come from the captured preset. Profile imports are validated and compiled only to fixed addresses; raw commands cannot be imported. A left-click assignment is required. Files are processed in the browser and never uploaded.
+Button encodings and wheel directions come from captures and inspection of A HUB's encoder. The DPI encoder stores seven little-endian DPI/50 values, active index at byte 14 and level count minus one at byte 16. Captured flags at bytes 17–19 are preserved. Multiple DPI levels have not yet been physically confirmed. Profile imports are validated and compiled only to fixed addresses; raw commands cannot be imported. A left-click assignment is required. Files are processed in the browser and never uploaded.
 
 `A-HUB-profile-backup.json` preserves the original source preset. `protocol.mjs` defines the built-in profile and encodings. Run `node check.mjs` for validation, round-trip and captured-byte checks.
 

@@ -1,4 +1,4 @@
-import { VENDOR, PRODUCT, PRESET, ACTIONS, BUTTONS, requireRapoo, validateProfile, compileProfile, makeReport } from './protocol.mjs?v=20260927-3';
+import { VENDOR, PRODUCT, PRESET, ACTIONS, BUTTONS, KEYS, requireRapoo, validateProfile, compileProfile, makeReport } from './protocol.mjs?v=20260928-1';
 
 const $ = selector => document.querySelector(selector);
 const connect = $('#connect');
@@ -19,27 +19,63 @@ BUTTONS.forEach((text, i) => {
     label.textContent = text;
     const select = document.createElement('select');
     select.id = `button-${i}`;
-    Object.entries(ACTIONS).forEach(([key, action]) => select.add(new Option(action.label, key)));
-    label.append(select);
+    const groups = {};
+    Object.entries(ACTIONS).forEach(([key, action]) => {
+        if (['media:181', 'media:205', 'shortcut:8:15', 'shortcut:1:6'].includes(key)) return;
+        const group = action.group || 'Mouse / saved actions';
+        if (!groups[group]) {
+            groups[group] = document.createElement('optgroup');
+            groups[group].label = group;
+            select.append(groups[group]);
+        }
+        groups[group].append(new Option(action.label, key));
+    });
+    select.add(new Option('Custom shortcut…', 'custom'));
+    const shortcut = document.createElement('div');
+    shortcut.className = 'grid';
+    shortcut.hidden = true;
+    const modifier = document.createElement('select');
+    modifier.id = `modifier-${i}`;
+    modifier.setAttribute('aria-label', `${text} shortcut modifier`);
+    ['Ctrl', 'Shift', 'Alt', 'Win', 'Right Ctrl', 'Right Shift', 'Right Alt', 'Right Win'].forEach((name, bit) => modifier.add(new Option(name, 1 << bit)));
+    const key = document.createElement('select');
+    key.id = `key-${i}`;
+    key.setAttribute('aria-label', `${text} shortcut key`);
+    KEYS.filter(([code]) => code < 224).forEach(([code, name]) => key.add(new Option(name, code)));
+    shortcut.append(modifier, key);
+    select.onchange = () => { shortcut.hidden = select.value !== 'custom'; };
+    label.append(select, shortcut);
     $('#buttons').append(label);
 });
 
 function showProfile(value) {
     const profile = validateProfile(value);
     $('#name').value = profile.name;
-    $('#dpi').value = profile.dpi;
+    $('#dpi').value = profile.dpiLevels.join(', ');
+    $('#active-dpi').value = profile.activeDpi + 1;
     $('#rate').value = profile.pollingRate;
-    profile.buttons.forEach((action, i) => { $(`#button-${i}`).value = action; });
-    $('#vertical').checked = profile.verticalReversed;
-    $('#horizontal').checked = profile.horizontalReversed;
+    profile.buttons.forEach((action, i) => {
+        const select = $(`#button-${i}`);
+        select.value = Object.hasOwn(ACTIONS, action) ? action : 'custom';
+        if (select.value === 'custom') {
+            const [, modifier, key] = action.split(':');
+            $(`#modifier-${i}`).value = modifier;
+            $(`#key-${i}`).value = key;
+        }
+        select.onchange();
+    });
 }
 
 function editorProfile() {
+    const dpiLevels = $('#dpi').value.split(',').map(d => Number(d.trim()));
+    const activeDpi = Number($('#active-dpi').value) - 1;
     return validateProfile({
-        format: PRESET.format, version: 1, name: $('#name').value,
-        dpi: Number($('#dpi').value), pollingRate: Number($('#rate').value),
-        buttons: BUTTONS.map((_, i) => $(`#button-${i}`).value),
-        verticalReversed: $('#vertical').checked, horizontalReversed: $('#horizontal').checked,
+        format: PRESET.format, version: 2, name: $('#name').value,
+        dpi: dpiLevels[activeDpi], dpiLevels, activeDpi, pollingRate: Number($('#rate').value),
+        buttons: BUTTONS.map((_, i) => {
+            const action = $(`#button-${i}`).value;
+            return action === 'custom' ? `shortcut:${$(`#modifier-${i}`).value}:${$(`#key-${i}`).value}` : action;
+        }),
     });
 }
 
