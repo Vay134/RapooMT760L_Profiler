@@ -29,7 +29,7 @@ export function requireRapoo(device) {
     return device;
 }
 
-import { KEYS } from './keys.mjs?v=20260928-1';
+import { KEYS } from './keys.mjs?v=20260928-2';
 export { KEYS };
 
 export const ACTIONS = {
@@ -97,12 +97,15 @@ Object.assign(ACTIONS, {
 export const PRESET = Object.freeze({
     format: 'rapoo-mt760l-profile', version: 2, name: 'New default',
     dpi: 1000, dpiLevels: Object.freeze([1000]), activeDpi: 0, pollingRate: 1,
+    macros: Object.freeze([]),
     buttons: Object.freeze(['left', 'right', 'middle', 'copy', 'lock', 'playPause', 'next', 'scrollUp', 'scrollDown', 'scrollLeft', 'scrollRight']),
 });
 
 export function actionBytes(action) {
     if (typeof action !== 'string') throw new Error('Unsupported button mapping.');
     if (Object.hasOwn(ACTIONS, action)) return [...ACTIONS[action].bytes];
+    const macro = /^macro:([0-9]|1[0-5])$/.exec(action);
+    if (macro) return [5, 0, Number(macro[1]), 0];
     const match = /^shortcut:(1|2|4|8|16|32|64|128):(\d{1,3})$/.exec(action);
     if (match && KEYS.some(([code]) => code === Number(match[2]) && code < 224)) return [2, 0, Number(match[1]), Number(match[2])];
     throw new Error('Unsupported button mapping.');
@@ -128,9 +131,16 @@ export function validateProfile(value) {
     }
     const aliases = {'media:181': 'next', 'media:205': 'playPause', 'shortcut:8:15': 'lock', 'shortcut:1:6': 'copy'};
     buttons = buttons.map(a => Object.hasOwn(aliases, a) ? aliases[a] : a);
-    buttons.forEach(actionBytes);
+    const macros = value.macros === undefined ? [] : value.macros;
+    if (!Array.isArray(macros) || macros.length > 16) throw new Error('Use up to 16 macros.');
+    const savedMacros = macros.map(validateMacro);
+    if (new Set(savedMacros.map(m => m.slot)).size !== savedMacros.length) throw new Error('Duplicate macro slot.');
+    buttons.forEach(action => {
+        actionBytes(action);
+        if (action.startsWith('macro:') && !savedMacros.some(m => m.slot === Number(action.slice(6)))) throw new Error('Assigned macro is missing.');
+    });
     if (!buttons.slice(0, 7).includes('left')) throw new Error('Keep at least one button assigned to left click.');
-    return {format: PRESET.format, version: 2, name: value.name.trim(), dpi: value.dpi, dpiLevels: [...dpiLevels], activeDpi, pollingRate: value.pollingRate, buttons};
+    return {format: PRESET.format, version: 2, name: value.name.trim(), dpi: value.dpi, dpiLevels: [...dpiLevels], activeDpi, pollingRate: value.pollingRate, buttons, macros: savedMacros};
 }
 
 export function compileProfile(value) {
@@ -149,15 +159,53 @@ export function compileProfile(value) {
     blocks[1][1][1] = p.pollingRate;
     const indexes = [2, 4, 3, 7, 8, 5, 6, 9, 10, 11, 12];
     p.buttons.forEach((action, i) => { blocks[indexes[i]][1] = actionBytes(action); });
-    return blocks;
+    return [...p.macros.flatMap(m => {
+        const bytes = compileMacro(m);
+        const result = [];
+        for (let offset = 0; offset < bytes.length; offset += 24) result.push([0x1000 * (m.slot + 1) + offset, bytes.slice(offset, offset + 24)]);
+        return result;
+    }), ...blocks];
 }
 
 export function makeReport(index, blocks = PROFILE) {
-    if (!Number.isInteger(index) || index < 0 || index >= PROFILE.length) throw new Error('Unknown profile command.');
+    if (!Number.isInteger(index) || index < 0 || index >= blocks.length) throw new Error('Unknown profile command.');
     const [address, bytes] = blocks[index];
-    if (address !== PROFILE[index][0] || bytes.length !== PROFILE[index][1].length || bytes.some(b => !Number.isInteger(b) || b < 0 || b > 255)) throw new Error('Invalid profile command.');
+    const fixed = PROFILE.some(([a, b]) => address === a && bytes.length === b.length);
+    const macro = Number.isInteger(address) && address >= 0x1000 && address < 0x11000 && address % 0x1000 + bytes.length <= 0x1000 && bytes.length > 0 && bytes.length <= 24;
+    if ((!fixed && !macro) || bytes.some(b => !Number.isInteger(b) || b < 0 || b > 255)) throw new Error('Invalid profile command.');
     const report = new Uint8Array(31);
-    report.set([0xa5, 0xa5, bytes.length, address & 255, address >> 8, 0, 0]);
+    report.set([0xa5, 0xa5, bytes.length, address & 255, (address >> 8) & 255, (address >> 16) & 255, (address >> 24) & 255]);
     report.set(bytes, 7);
     return report;
+}
+
+export function validateMacro(m) {
+    if (!m || typeof m !== 'object' || !Number.isInteger(m.slot) || m.slot < 0 || m.slot > 15 || typeof m.name !== 'string' || !m.name.trim() || m.name.length > 60) throw new Error('Macro needs a name and slot 1-16.');
+    if (!['repeat', 'toggle', 'hold'].includes(m.mode) || !Number.isInteger(m.repeat) || m.repeat < 1 || m.repeat > 65533 || typeof m.ignoreDelays !== 'boolean') throw new Error('Invalid macro playback.');
+    if (!Array.isArray(m.events) || !m.events.length || m.events.length > 1000) throw new Error('Macro needs 1-1000 events.');
+    const events = m.events.map(e => {
+        if (!e || !Number.isInteger(e.delay) || e.delay < 0 || e.delay > 30000) throw new Error('Event delay must be 0-30000 ms.');
+        if (e.type === 'move' && Number.isInteger(e.x) && Number.isInteger(e.y) && e.x >= -2048 && e.x <= 2047 && e.y >= -2048 && e.y <= 2047 && (e.x || e.y)) return {type: e.type, x: e.x, y: e.y, delay: e.delay};
+        if (['down', 'up'].includes(e.type) && (KEYS.some(([code]) => code === e.key) || [240, 241, 242, 243, 244].includes(e.key))) return {type: e.type, key: e.key, delay: e.delay};
+        if (['wheel', 'tilt'].includes(e.type) && Number.isInteger(e.amount) && e.amount >= -127 && e.amount <= 127 && e.amount !== 0) return {type: e.type, amount: e.amount, delay: e.delay};
+        throw new Error('Invalid macro event.');
+    });
+    if (4 + events.reduce((n, e) => n + (e.type === 'move' ? 6 : ['wheel', 'tilt'].includes(e.type) ? 10 : 3), 0) > 4096) throw new Error('Macro exceeds mouse memory.');
+    return {slot: m.slot, name: m.name.trim(), mode: m.mode, repeat: m.repeat, ignoreDelays: m.ignoreDelays, events};
+}
+
+export function compileMacro(value) {
+    const m = validateMacro(value);
+    const playback = m.mode === 'hold' ? 65535 : m.mode === 'toggle' ? 65534 : m.repeat;
+    const bytes = [0, 0, playback & 255, playback >> 8];
+    for (const e of m.events) {
+        const delay = (m.ignoreDelays && e.delay ? 2 : e.delay) * 2 + (e.type === 'down' ? 1 : 0);
+        bytes.push(delay & 255, delay >> 8);
+        if (e.type === 'move') bytes.push(247, ((e.x >> 4) & 240) | ((e.y >> 8) & 15), e.x & 255, e.y & 255);
+        else if (['wheel', 'tilt'].includes(e.type)) bytes.push(248, 0, 0, 0, 0, 0, e.type === 'tilt' ? e.amount & 255 : 0, e.type === 'wheel' ? e.amount & 255 : 0);
+        else bytes.push(e.key);
+    }
+    bytes[0] = bytes.length & 255;
+    bytes[1] = bytes.length >> 8;
+    return bytes;
 }

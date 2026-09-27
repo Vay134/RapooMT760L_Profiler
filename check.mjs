@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { requireRapoo, makeReport, PROFILE, PRESET, validateProfile, compileProfile } from './protocol.mjs';
+import { requireRapoo, makeReport, PROFILE, PRESET, validateProfile, compileProfile, compileMacro } from './protocol.mjs';
 
 const rapoo = {
     vendorId: 0x24ae, productId: 0x1870,
@@ -43,3 +43,25 @@ console.log('Profile import, encoding, preset preservation and validation passed
 const multi = compileProfile({...PRESET, dpi: 2000, dpiLevels: [800, 2000, 4000], activeDpi: 1});
 assert.deepEqual(multi[0][1], [16,0,40,0,80,0,0,0,0,0,0,0,0,0,2,0,1,0,2,3]);
 assert.throws(() => validateProfile({...PRESET, dpiLevels: Array(8).fill(1000)}));
+
+const macro = {slot: 0, name: 'Recorded A', mode: 'repeat', repeat: 1, ignoreDelays: false, events: [
+    {type: 'down', key: 225, delay: 185}, {type: 'down', key: 4, delay: 155},
+    {type: 'up', key: 4, delay: 10}, {type: 'up', key: 225, delay: 0},
+]};
+assert.deepEqual(compileMacro(macro), [16, 0, 1, 0, 115, 1, 225, 55, 1, 4, 20, 0, 4, 0, 0, 225]);
+const macroProfile = {...PRESET, macros: [macro], buttons: [...PRESET.buttons]};
+macroProfile.buttons[4] = 'macro:0';
+const macroBlocks = compileProfile(macroProfile);
+assert.deepEqual(macroBlocks[0], [0x1000, compileMacro(macro)]);
+assert.deepEqual(macroBlocks.find(([a]) => a === 0x60c)[1], [5, 0, 0, 0]);
+assert.deepEqual(Array.from(makeReport(0, macroBlocks).slice(0, 23)), [165, 165, 16, 0, 16, 0, 0, ...compileMacro(macro)]);
+assert.deepEqual(validateProfile(JSON.parse(JSON.stringify(macroProfile))), macroProfile);
+assert.throws(() => compileProfile({...macroProfile, macros: []}));
+assert.throws(() => compileMacro({...macro, events: [{type: 'down', key: 999, delay: 0}]}));
+assert.throws(() => compileMacro({...macro, events: [{type: 'down', key: 4, delay: -1}]}));
+const longMacro = {...macro, events: Array.from({length: 20}, () => ({type: 'up', key: 4, delay: 0}))};
+assert.ok(compileProfile({...macroProfile, macros: [longMacro]}).slice(0, 3).every(([_, b]) => b.length <= 24));
+console.log('Captured macro, assignment, chunking, export/import and validation passed.');
+
+const lastSlot = compileProfile({...macroProfile, macros: [{...macro, slot: 15}], buttons: PRESET.buttons});
+assert.deepEqual(Array.from(makeReport(0, lastSlot).slice(3, 7)), [0, 0, 1, 0]);
