@@ -1,17 +1,29 @@
-# MT760L profile restore
+# MT760L Profiler
 
-Static Chrome/Edge WebHID app restricted to the Rapoo receiver `24AE:1870`, vendor collection `FF00:000E`, output report `BA` (31 payload bytes). Razer devices are rejected at selection and before every write.
+[Open the app](https://vay134.github.io/RapooMT760L_Profiler/).
 
-This first version replays the 13 settings writes captured from A HUB restoring this user's **New default** profile on 2026-09-27. The user confirmed both media buttons worked after that native restore. It does not accept arbitrary memory writes, edit profiles, change pairing or firmware, or claim permanent onboard storage.
+A static Chrome/Edge WebHID settings editor for the Rapoo MT760L over its 2.4 GHz receiver (24AE:1870).
 
-## Run locally
+## Use
 
-From this folder, run `python -m http.server 8766 --bind 127.0.0.1` and open `http://127.0.0.1:8766` in Chrome. Quit A HUB, connect the Rapoo, then choose **Restore profile**.
+Quit A HUB, connect the receiver, and select a profile or edit settings. **Apply to mouse** sends the displayed profile once. **Download profile** saves a JSON file; **Import profile** loads an exported JSON file into the editor without writing to the mouse. The built-in **New default** preset is always available and cannot be overwritten.
 
-The same files can be hosted on HTTPS as a static website. Work laptop policies may block WebHID. No Rapoo software or local helper is required for the hosted app.
+Supported controls: one DPI level (50–4000 in steps of 50), polling rate (125/250/500/1000 Hz), seven button assignments using the listed mouse/media/shortcut actions, and reversed wheel directions. Button 3 and Button 4 use A HUB's key IDs because their physical labels have not been established. Macros, arbitrary keyboard shortcuts, multiple DPI levels and A HUB JSON imports are not implemented.
 
-## Verification
+## Device reads and persistence
 
-Run `node check.mjs` for the receiver guard and report encoding check. A complete browser test profile changed both media buttons to next-track with A HUB fully closed, confirmed by the user on 2026-09-27. A single-button write did not change physical behavior in the earlier test; this app sends the complete captured sequence. DPI and retention after switching computers have not been verified. Device settings readback has not been verified, so the app says **Profile sent**, not **Profile verified**. There is no automatic hardware backup or rollback in this version. Keep A HUB available to restore settings if interrupted.
+The editor initially shows the built-in preset, not a claimed device backup. On connection it requests status; if interrupt report BB arrives, current DPI is shown separately. A HUB reads full configuration through Windows HidD_GetInputReport control transfers; WebHID does not provide that operation. Full button/polling configuration has not been read successfully in Chrome, so imported or edited settings remain the source of the displayed profile. Applying sends commands without verified readback. Test the mouse after applying; retention after switching computers remains unverified.
 
-`A-HUB-profile-backup.json` preserves the source profile. `protocol.mjs` contains the exact captured command payloads. Profile editing, live capture and automatic readback remain unimplemented.
+## Protocol evidence
+
+The preset replays the original 13 captured A HUB writes. Its DPI block at 0x638 starts with 20 (1000 DPI / 50). A later 2000 DPI capture starts with 40. The final byte 3 in this block is preserved, not interpreted as polling rate.
+
+Polling interval is encoded at 0x630: 1 = 1000 Hz, 2 = 500 Hz, 4 = 250 Hz, 8 = 125 Hz. All four were captured while changing A HUB settings. Profile-download writes preserve trailing bytes FF FF; direct polling changes used 01 00. A HUB's JSON returnRate enum uses a different numbering scheme.
+
+Button encodings and wheel directions come from the captured preset. Profile imports are validated and compiled only to fixed addresses; raw commands cannot be imported. A left-click assignment is required. Files are processed in the browser and never uploaded.
+
+`A-HUB-profile-backup.json` preserves the original source preset. `protocol.mjs` defines the built-in profile and encodings. Run `node check.mjs` for validation, round-trip and captured-byte checks.
+
+## Local development
+
+Run `python -m http.server 8766 --bind 127.0.0.1` in this folder and open `http://127.0.0.1:8766`. HTTPS static hosting also works. Workplace browser policies may block WebHID.
