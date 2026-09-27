@@ -1,0 +1,152 @@
+{
+    "chipType": 7,
+    "deviceName": "MT760",
+    "dongleVersion": "V1.0.0.0",
+    "dpi": {
+        "CurDpiGear": 1,
+        "DPIListX": [
+            {
+                "dpiX": 1000
+            },
+            {
+                "dpiX": 0
+            },
+            {
+                "dpiX": 0
+            },
+            {
+                "dpiX": 0
+            },
+            {
+                "dpiX": 0
+            },
+            {
+                "dpiX": 0
+            },
+            {
+                "dpiX": 0
+            }
+        ],
+        "DPIListY": [
+            {
+                "dpiY": 1000
+            },
+            {
+                "dpiY": 0
+            },
+            {
+                "dpiY": 0
+            },
+            {
+                "dpiY": 0
+            },
+            {
+                "dpiY": 0
+            },
+            {
+                "dpiY": 0
+            },
+            {
+                "dpiY": 0
+            }
+        ],
+        "Size": 1
+    },
+    "fwVersion": "V0.1.4.4",
+    "key": [
+        {
+            "KeyID": 0,
+            "KeyInfo": {
+                "MouseKeyList": [
+                    240
+                ]
+            },
+            "KeyType": 4
+        },
+        {
+            "KeyID": 1,
+            "KeyInfo": {
+                "MouseKeyList": [
+                    242
+                ]
+            },
+            "KeyType": 4
+        },
+        {
+            "KeyID": 2,
+            "KeyInfo": {
+                "MouseKeyList": [
+                    241
+                ]
+            },
+            "KeyType": 4
+        },
+        {
+            "KeyID": 5,
+            "KeyInfo": {
+                "KeyCode": 205
+            },
+            "KeyType": 2
+        },
+        {
+            "KeyID": 6,
+            "KeyInfo": {
+                "KeyCode": 181
+            },
+            "KeyType": 2
+        },
+        {
+            "KeyID": 4,
+            "KeyInfo": {
+                "KeyCodeList": [
+                    6
+                ],
+                "ModifyKeyList": [
+                    224
+                ]
+            },
+            "KeyType": 15
+        },
+        {
+            "KeyID": 3,
+            "KeyInfo": {
+                "KeyCodeList": [
+                    15
+                ],
+                "ModifyKeyList": [
+                    227
+                ]
+            },
+            "KeyType": 15
+        },
+        {
+            "KeyID": 9,
+            "KeyInfo": {
+                "VerticalRoller": 1
+            },
+            "KeyType": 6
+        },
+        {
+            "KeyID": 10,
+            "KeyInfo": {
+                "VerticalRoller": 255
+            },
+            "KeyType": 6
+        },
+        {
+            "KeyID": 7,
+            "KeyInfo": {
+                "HorizontalRoller": 255
+            },
+            "KeyType": 7
+        },
+        {
+            "KeyID": 8,
+            "KeyInfo": {
+                "HorizontalRoller": 1
+            },
+            "KeyType": 7
+        }
+    ],
+    "returnRate": 3
+}
