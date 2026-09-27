@@ -1,4 +1,4 @@
-import { VENDOR, PRODUCT, PRESET, ACTIONS, BUTTONS, requireRapoo, validateProfile, compileProfile, makeReport } from './protocol.mjs';
+import { VENDOR, PRODUCT, PRESET, ACTIONS, BUTTONS, requireRapoo, validateProfile, compileProfile, makeReport } from './protocol.mjs?v=20260927-3';
 
 const $ = selector => document.querySelector(selector);
 const connect = $('#connect');
