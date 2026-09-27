@@ -38,7 +38,7 @@ export const ACTIONS = {
     copy: {label: 'Copy (Ctrl+C)', bytes: [2, 0, 1, 6]},
     lock: {label: 'Lock Windows (Win+L)', bytes: [2, 0, 8, 15]},
 };
-export const BUTTONS = ['Left button', 'Right button', 'Wheel click', 'Button 3', 'Button 4', 'Thumb: play/pause', 'Thumb: next track'];
+export const BUTTONS = ['Left button', 'Right button', 'Wheel click', 'Top button', 'Bottom button', 'Side button (up)', 'Side button (down)'];
 export const PRESET = Object.freeze({
     format: 'rapoo-mt760l-profile', version: 1, name: 'New default',
     dpi: 1000, pollingRate: 1,

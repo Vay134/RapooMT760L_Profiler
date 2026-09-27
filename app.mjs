@@ -24,7 +24,7 @@ BUTTONS.forEach((text, i) => {
     $('#buttons').append(label);
 });
 
-function showProfile(value, source) {
+function showProfile(value) {
     const profile = validateProfile(value);
     $('#name').value = profile.name;
     $('#dpi').value = profile.dpi;
@@ -32,7 +32,6 @@ function showProfile(value, source) {
     profile.buttons.forEach((action, i) => { $(`#button-${i}`).value = action; });
     $('#vertical').checked = profile.verticalReversed;
     $('#horizontal').checked = profile.horizontalReversed;
-    $('#source').textContent = `Source: ${source}`;
 }
 
 function editorProfile() {
@@ -52,10 +51,8 @@ function setBusy(value) {
     ['#preset', '#name', '#download', '#import', '#file'].forEach(id => { $(id).disabled = value; });
 }
 
-showProfile(PRESET, 'built-in profile');
-$('#editor').addEventListener('input', () => { $('#source').textContent = 'Source: edited profile'; });
-$('#name').addEventListener('input', () => { $('#source').textContent = 'Source: edited profile'; });
-$('#preset').onclick = () => { showProfile(PRESET, 'built-in profile'); status.textContent = 'Built-in profile loaded into the editor.'; };
+showProfile(PRESET);
+$('#preset').onclick = () => { showProfile(PRESET); status.textContent = 'Default profile loaded into the editor.'; };
 $('#import').onclick = () => $('#file').click();
 $('#file').onchange = async event => {
     const file = event.target.files[0];
@@ -64,7 +61,7 @@ $('#file').onchange = async event => {
         if (file.size > 65536) throw new Error('Profile files must be smaller than 64 KB.');
         const value = JSON.parse(await file.text());
         if (busy) throw new Error('Wait for the current transfer to finish.');
-        showProfile(value, 'imported profile');
+        showProfile(value);
         status.textContent = 'Profile imported. Apply to send it to the mouse.';
     } catch (error) { status.textContent = `Import failed: ${error.message}`; }
     finally { event.target.value = ''; }
@@ -78,7 +75,7 @@ $('#download').onclick = () => {
         link.download = `${profile.name.replace(/[^a-zA-Z0-9_-]/g, '_') || 'profile'}.json`;
         link.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
-        status.textContent = 'Profile downloaded.';
+        status.textContent = 'Profile exported.';
     } catch (error) { status.textContent = error.message; }
 };
 

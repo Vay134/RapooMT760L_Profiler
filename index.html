@@ -31,7 +31,6 @@
         .actions { display: flex; flex-wrap: wrap; gap: 10px; }
         aside .actions button { width: 100%; }
         .hint { font-size: 13px; color: #9aa9ba; line-height: 1.6; }
-        .source { margin: 12px 0 0; font-size: 12px; color: #83baff; }
         .check { display: flex; align-items: center; gap: 10px; }
         .check input { width: 18px; height: 18px; margin: 0; accent-color: #83baff; }
         .footer { margin-top: 20px; }
@@ -53,11 +52,11 @@
         <div class="layout">
             <aside>
                 <h2>Profiles</h2>
-                <button class="preset" id="preset">New default · Built-in</button>
-                <label>Profile name<input id="name" maxlength="60" required></label>
-                <p class="source" id="source">Source: built-in profile</p>
+                <button class="preset" id="preset">Load default profile</button>
+                <label>Export name<input id="name" maxlength="60" required></label>
+                <p class="hint">Used for the exported file name.</p>
                 <div class="actions" style="margin-top:20px">
-                    <button id="download">Download profile</button>
+                    <button id="download">Export profile</button>
                     <button id="import">Import profile</button>
                     <input id="file" type="file" accept=".json,application/json" hidden aria-label="Import profile file">
                 </div>

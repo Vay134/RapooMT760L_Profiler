@@ -6,9 +6,9 @@ A static Chrome/Edge WebHID settings editor for the Rapoo MT760L over its 2.4 GH
 
 ## Use
 
-Quit A HUB, connect the receiver, and select a profile or edit settings. **Apply to mouse** sends the displayed profile once. **Download profile** saves a JSON file; **Import profile** loads an exported JSON file into the editor without writing to the mouse. The built-in **New default** preset is always available and cannot be overwritten.
+Quit A HUB, connect the receiver, and select a profile or edit settings. **Apply to mouse** sends the displayed profile once. **Export profile** saves a JSON file; **Import profile** loads an exported JSON file into the editor without writing to the mouse. The built-in **Load default profile** preset is always available and cannot be overwritten.
 
-Supported controls: one DPI level (50–4000 in steps of 50), polling rate (125/250/500/1000 Hz), seven button assignments using the listed mouse/media/shortcut actions, and reversed wheel directions. Button 3 and Button 4 use A HUB's key IDs because their physical labels have not been established. Macros, arbitrary keyboard shortcuts, multiple DPI levels and A HUB JSON imports are not implemented.
+Supported controls: one DPI level (50–4000 in steps of 50), polling rate (125/250/500/1000 Hz), seven button assignments using the listed mouse/media/shortcut actions, and reversed wheel directions. Macros, arbitrary keyboard shortcuts, multiple DPI levels and A HUB JSON imports are not implemented.
 
 ## Device reads and persistence
 
