@@ -41,5 +41,5 @@ assert.throws(() => validateProfile({...PRESET, buttons: PRESET.buttons.map((a,i
 console.log('Profile import, encoding, preset preservation and validation passed.');
 
 const multi = compileProfile({...PRESET, dpi: 2000, dpiLevels: [800, 2000, 4000], activeDpi: 1});
-assert.deepEqual(multi[0][1], [16,0,40,0,80,0,0,0,0,0,0,0,0,0,1,0,2,0,2,3]);
+assert.deepEqual(multi[0][1], [16,0,40,0,80,0,0,0,0,0,0,0,0,0,2,0,1,0,2,3]);
 assert.throws(() => validateProfile({...PRESET, dpiLevels: Array(8).fill(1000)}));

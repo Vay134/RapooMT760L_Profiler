@@ -22,7 +22,7 @@ The preset replays the original 13 captured A HUB writes. Its DPI block at 0x638
 
 Polling interval is encoded at 0x630: 1 = 1000 Hz, 2 = 500 Hz, 4 = 250 Hz, 8 = 125 Hz. All four were captured while changing A HUB settings. Profile-download writes preserve trailing bytes FF FF; direct polling changes used 01 00. A HUB's JSON returnRate enum uses a different numbering scheme.
 
-Button encodings and wheel directions come from captures and inspection of A HUB's encoder. The DPI encoder stores seven little-endian DPI/50 values, active index at byte 14 and level count minus one at byte 16. Captured flags at bytes 17–19 are preserved. Multiple DPI levels have not yet been physically confirmed. Profile imports are validated and compiled only to fixed addresses; raw commands cannot be imported. A left-click assignment is required. Files are processed in the browser and never uploaded.
+Button encodings and wheel directions come from captures and inspection of A HUB's encoder. The DPI encoder stores seven little-endian DPI/50 values, level count minus one at byte 14 and active index at byte 16. Captured flags at bytes 17–19 are preserved. Multiple DPI levels have not yet been physically confirmed. Profile imports are validated and compiled only to fixed addresses; raw commands cannot be imported. A left-click assignment is required. Files are processed in the browser and never uploaded.
 
 `A-HUB-profile-backup.json` preserves the original source preset. `protocol.mjs` defines the built-in profile and encodings. Run `node check.mjs` for validation, round-trip and captured-byte checks.
 

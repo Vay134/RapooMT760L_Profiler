@@ -136,15 +136,15 @@ export function validateProfile(value) {
 export function compileProfile(value) {
     const p = validateProfile(value);
     const blocks = PROFILE.map(([address, bytes]) => [address, [...bytes]]);
-    // A HUB encoder: seven little-endian DPI/50 values, active index at 14,
-    // level count minus one at 16. Preserve the captured flags at 17-19.
+    // A HUB encoder: seven little-endian DPI/50 values, level count minus one at 14,
+    // active index at 16. Preserve the captured flags at 17-19.
     blocks[0][1].fill(0, 0, 17);
     p.dpiLevels.forEach((dpi, i) => {
         blocks[0][1][i * 2] = dpi / 50;
         blocks[0][1][i * 2 + 1] = 0;
     });
-    blocks[0][1][14] = p.activeDpi;
-    blocks[0][1][16] = p.dpiLevels.length - 1;
+    blocks[0][1][14] = p.dpiLevels.length - 1;
+    blocks[0][1][16] = p.activeDpi;
     blocks[1][1][0] = p.pollingRate;
     blocks[1][1][1] = p.pollingRate;
     const indexes = [2, 4, 3, 7, 8, 5, 6, 9, 10, 11, 12];
